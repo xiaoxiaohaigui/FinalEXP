@@ -1,0 +1,48 @@
+# 基于 Mozilla 风格进行自定义
+BasedOnStyle: Mozilla
+
+# 语言
+Language: Cpp
+
+# --- 设置缩进为 4 个空格 ---
+IndentWidth: 4                # 代码缩进的宽度 [citation:1][citation:2][citation:7]
+TabWidth: 4                   # 制表符的宽度 [citation:7]
+UseTab: Never                 # 禁止使用制表符，只用空格 [citation:10]
+
+# 禁止在函数名和左括号之间插入空格
+SpaceBeforeParens: Never
+
+# --- 设置控制语句的大括号换行 ---
+# 将大括号的换行策略设为“自定义”，这样才能精细控制每种情况 [citation:1][citation:8]
+BreakBeforeBraces: Custom
+BraceWrapping:
+  # 控制语句 (if, for, while, switch 等) 后的大括号是否换行
+  # 可选项: Always, Never, MultiLine
+  AfterControlStatement: Always   # 设为 Always 即可让控制语句的大括号换行 [citation:1]
+  # 下面是其他常用的大括号换行设置，可以根据你的喜好调整，这里列出常见的配置供参考
+  AfterFunction: True              # 函数的大括号换行 (Mozilla 风格默认就是换行)
+  AfterClass: True                 # 类的大括号换行
+  AfterNamespace: False            # 命名空间的大括号不换行 (可自定义)
+  BeforeElse: True                # else 前不换行 (保持与 if 的 `}` 在同一行)
+  BeforeCatch: True               # catch 前不换行
+
+# --- 其他一些常见的优化选项 (可选) ---
+# 访问修饰符 'public:', 'private:' 的缩进，保持和 Mozilla 风格一致
+AccessModifierOffset: -2
+
+# 指针和引用的符号 '*' 和 '&' 靠左还是靠右，默认是靠左 (int* a)
+PointerAlignment: Right
+
+# 列宽限制，超过此限制会尝试换行，0 表示不限制
+ColumnLimit: 100
+
+# 是否允许将短函数放在一行，可选值: None, InlineOnly, Empty, All
+AllowShortFunctionsOnASingleLine: None
+
+# 函数返回类型后是否换行
+AlwaysBreakAfterReturnType: None
+
+# 是否允许将短 if 语句放在一行
+AllowShortIfStatementsOnASingleLine: Never
+
+
