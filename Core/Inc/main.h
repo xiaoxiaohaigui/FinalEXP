@@ -97,7 +97,11 @@ void Error_Handler(void);
 #define LED11_GPIO_Port GPIOF
 
 /* USER CODE BEGIN Private defines */
-extern volatile uint16_t adc_value[2]; // 存放ADC值，adc_value[0]存放光敏电阻的采样值，adc_value[1]存放热敏电阻的采样值
+extern volatile uint16_t
+  adc_value[2]; // 存放ADC值，adc_value[0]存放光敏电阻的采样值，adc_value[1]存放热敏电阻的采样值
+typedef enum { LED_DISPLAY_LIGHT, LED_DISPLAY_TEMP } LED_DisplayMode_t; // 显示模式，显示光敏电阻还是热敏电阻
+extern LED_DisplayMode_t LED_displayMode;                               // 当前显示模式
+extern DMA_HandleTypeDef hdma_usart1_rx; // 声明DMA句柄，供main.c使用
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

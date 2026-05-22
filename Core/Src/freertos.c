@@ -26,7 +26,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "LCD12864.h"
+#include "btn.h"
 #include "led.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define BTN_DEBOUNCE_DELAY 40 // 按键消抖时间，单位ms
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -214,10 +216,48 @@ void MX_FREERTOS_Init(void) {
 void StartBtnTask(void *argument)
 {
   /* USER CODE BEGIN StartBtnTask */
+    uint8_t debounceCounter; // 消抖计数器
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1);
+        // 读取按键状态
+        uint8_t btnPressed = HAL_GPIO_ReadPin(WKUP_GPIO_Port, WKUP_Pin) == GPIO_PIN_RESET;
+        switch(btnState)
+        {
+            case BTN_STATE_IDLE:
+                if(btnPressed)
+                {
+                    btnState = BTN_STATE_DEBOUNCE;
+                    debounceCounter = 0;
+                }
+                break;
+
+            case BTN_STATE_DEBOUNCE:
+                if(btnPressed)
+                {
+                    debounceCounter++;
+                    if(debounceCounter >= BTN_DEBOUNCE_DELAY / 20)
+                    { // 每20ms检查一次
+                        btnState = BTN_STATE_PRESSED;
+                    }
+                }
+                else
+                {
+                    btnState = BTN_STATE_IDLE; // 按键抖动，回到空闲状态
+                }
+                break;
+
+            case BTN_STATE_PRESSED:
+                if(btnPressed)
+                {
+                    break;
+                }
+
+                btnEvent = BTN_EVENT_CLICK; // 点击事件
+                btnState = BTN_STATE_IDLE;  // 回到空闲状态
+                break;
+        }
+        osDelay(20);
     }
   /* USER CODE END StartBtnTask */
 }
@@ -250,12 +290,36 @@ void StartLEDTask(void *argument)
 void StartADCTask(void *argument)
 {
   /* USER CODE BEGIN StartADCTask */
+
     /* Infinite loop */
     for(;;)
     {
-        // 通过板载LED显示光敏电阻的采样值，adc_value[0]，范围0~4095，点亮LED0到LED11
-        LED_Binary_Display(adc_value[0]);
-        osDelay(100);
+        // 根据按键事件切换显示模式
+        if(btnEvent == BTN_EVENT_CLICK)
+        {
+            btnEvent = BTN_EVENT_NONE; // 清除事件
+            if(LED_displayMode == LED_DISPLAY_LIGHT)
+            {
+                LED_displayMode = LED_DISPLAY_TEMP; // 切换到显示热敏电阻
+            }
+            else
+            {
+                LED_displayMode = LED_DISPLAY_LIGHT; // 切换到显示光敏电阻
+            }
+        }
+
+        // 根据当前显示模式，切换LED显示光敏电阻的采样值还是热敏电阻的采样值
+        if(LED_displayMode == LED_DISPLAY_LIGHT)
+        {
+            // 通过板载LED显示光敏电阻的采样值，adc_value[0]，范围0~4095，点亮LED0到LED11
+            LED_Binary_Display(adc_value[0]);
+        }
+        else if(LED_displayMode == LED_DISPLAY_TEMP)
+        {
+            // 通过板载LED显示热敏电阻的采样值，adc_value[1]，范围0~4095，点亮LED0到LED11
+            LED_Binary_Display(adc_value[1]);
+        }
+        osDelay(200);
     }
   /* USER CODE END StartADCTask */
 }
@@ -270,10 +334,11 @@ void StartADCTask(void *argument)
 void StartUARTTask(void *argument)
 {
   /* USER CODE BEGIN StartUARTTask */
+
     /* Infinite loop */
     for(;;)
     {
-        osDelay(100);
+        osDelay(50);
     }
   /* USER CODE END StartUARTTask */
 }

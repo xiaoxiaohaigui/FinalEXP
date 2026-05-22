@@ -46,6 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/LCD12864.c
     Core/Src/led.c
+    Core/Src/btn.c
     # Add user sources here
 )
 
