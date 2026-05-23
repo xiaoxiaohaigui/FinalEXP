@@ -8,6 +8,7 @@
 /**************************************************/
 
 #include "LCD12864.h" // My header file
+#include "DelayUs.h"
 #include "cmsis_os.h" // FreeRTOS
 #include "cmsis_os2.h"
 
@@ -18,29 +19,6 @@ LCD_DelayMs(uint32_t ms)
         osDelay(ms);
     else
         HAL_Delay(ms);
-}
-
-/* Using TIM3 for delay */
-
-void
-Delay_Init(void)
-{
-    HAL_TIM_Base_Start(&htim3);
-}
-
-void
-Delay_us(uint16_t nus)
-{
-    uint16_t start = __HAL_TIM_GET_COUNTER(&htim3);
-    uint16_t curr;
-
-    while(1)
-    {
-        curr = __HAL_TIM_GET_COUNTER(&htim3);
-
-        if((uint16_t)(curr - start) >= nus)
-            break;
-    }
 }
 
 /***************************************************************************************************/

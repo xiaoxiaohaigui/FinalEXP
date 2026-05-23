@@ -22,14 +22,17 @@
 #include "cmsis_os.h"
 #include "dma.h"
 #include "gpio.h"
-#include "stm32f1xx_hal_uart.h"
 #include "tim.h"
 #include "usart.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "DelayUs.h"
+#include "KeyScan.h"
 #include "LCD12864.h"
 #include "btn.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +56,7 @@
 volatile uint16_t
   adc_value[2];     // 存放ADC值，adc_value[0]存放光敏电阻的采样值，adc_value[1]存放热敏电阻的采样值
 uint8_t rxData[50]; // 接收缓冲区(用于回显)
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +68,8 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-LED_DisplayMode_t LED_displayMode = LED_DISPLAY_LIGHT; // 默认显示光敏电阻的采样值
+LED_DisplayMode_t LED_displayMode = LED_DISPLAY_LIGHT;   // 默认显示光敏电阻的采样值
+TrafficLightState_t trafficLightState = NS_GREEN_WE_RED; // 初始化交通灯状态为南北绿，东西红
 /* USER CODE END 0 */
 
 /**
@@ -101,9 +106,11 @@ main(void)
     MX_TIM3_Init();
     MX_ADC1_Init();
     MX_USART1_UART_Init();
+    MX_TIM5_Init();
     /* USER CODE BEGIN 2 */
     // 初始化按键
     Btn_Init();
+    KeyScan_Init();
 
     // 初始化LCD12864
     Delay_Init();
@@ -112,6 +119,9 @@ main(void)
 
     // 启动ADC DMA采集，连续采集光敏电阻和热敏电阻的模拟值，并存放到adc_value数组中
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_value, 2);
+
+    // 启动TIM5中断，用于每3秒切换一次交通灯状态
+    HAL_TIM_Base_Start_IT(&htim5);
 
     // 启动UART接收，使用空闲中断模式，接收数据存放到rxData数组中
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rxData, sizeof(rxData));
@@ -191,7 +201,7 @@ SystemClock_Config(void)
 void
 HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-    if(huart == &huart1)
+    if(huart->Instance == USART1)
     {
         // 回显接收到的数据
         HAL_UART_Transmit_DMA(&huart1, rxData, Size);
@@ -213,7 +223,28 @@ void
 HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     /* USER CODE BEGIN Callback 0 */
+    if(htim->Instance == TIM5)
+    {
+        // 每3秒切换一次交通灯状态
+        switch(trafficLightState)
+        {
+            case NS_GREEN_WE_RED:
+                trafficLightState = NS_YELLOW_WE_RED;
+                break;
 
+            case NS_YELLOW_WE_RED:
+                trafficLightState = NS_RED_WE_GREEN;
+                break;
+
+            case NS_RED_WE_GREEN:
+                trafficLightState = NS_RED_WE_YELLOW;
+                break;
+
+            case NS_RED_WE_YELLOW:
+                trafficLightState = NS_GREEN_WE_RED;
+                break;
+        }
+    }
     /* USER CODE END Callback 0 */
     if(htim->Instance == TIM6)
     {

@@ -42,8 +42,6 @@ enum COLx
 
 void LCD_Clear(void);
 void LCD_Init(void);
-void Delay_Init(void);
-void Delay_us(uint16_t nus);
 void LCD_DispChar(uint8_t row,uint8_t col,char ch);
 void LCD_DispString(uint8_t row,uint8_t col,const char *str);
 void LCD_DispCN(uint8_t row,uint8_t col,char *str);
