@@ -20,7 +20,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
-#include "cmsis_os2.h"
 #include "main.h"
 #include "task.h"
 
@@ -29,6 +28,7 @@
 #include "KeyScan.h"
 #include "LCD12864.h"
 #include "btn.h"
+#include "dc_motor.h"
 #include "led.h"
 #include "servo_motor.h"
 #include "spi.h"
@@ -640,6 +640,7 @@ StartMotorTask(void *argument)
 {
     /* USER CODE BEGIN StartMotorTask */
     Stepper_Init();    // 初始化步进电机
+    DCMotor_Init();    // 初始化直流电机
     ServoMotor_Init(); // 初始化舵机
 
     /* Infinite loop */
@@ -686,6 +687,30 @@ StartMotorTask(void *argument)
                     Stepper_Stop(); // 步进电机关闭时停止输出
                 }
 
+                DCMotor_Brake();   // 其他模式时直流电机制动
+                ServoMotor_Home(); // 其他模式时舵机归零
+                break;
+            // 直流电机
+            case DC_MOTOR_CONTROL:
+                if(motorStartStopState == MOTOR_ON)
+                {
+                    switch(motorMode)
+                    {
+                        case MOTOR_MODE1:
+                            DCMotor_Forward(DCMOTOR_DEFAULT_DUTY_PERCENT);
+                            break;
+
+                        case MOTOR_MODE2:
+                            DCMotor_Reverse(DCMOTOR_DEFAULT_DUTY_PERCENT);
+                            break;
+                    }
+                }
+                else
+                {
+                    DCMotor_Brake(); // 直流电机关闭时制动
+                }
+
+                Stepper_Stop();    // 其他模式时步进电机停止
                 ServoMotor_Home(); // 其他模式时舵机归零
                 break;
             // 舵机
@@ -707,14 +732,16 @@ StartMotorTask(void *argument)
                     ServoMotor_Home(); // 舵机关闭时归零
                 }
 
-                Stepper_Stop(); // 其他模式时步进电机停止
+                Stepper_Stop();  // 其他模式时步进电机停止
+                DCMotor_Brake(); // 其他模式时直流电机制动
                 break;
             default:
                 Stepper_Stop();    // 其他模式时步进电机停止
+                DCMotor_Brake();   // 其他模式时直流电机制动
                 ServoMotor_Home(); // 其他模式时舵机归零
                 break;
         }
-        osDelay(50);
+        osDelay(10);
     }
     /* USER CODE END StartMotorTask */
 }

@@ -24,6 +24,7 @@ static const StepperPhase_t stepperPhases[4] = {
     { STEPPER_D_GPIO_Port, STEPPER_D_Pin },
 };
 
+// 四相八拍序列，8行对应8拍，4列对应4个相位，1表示导通，0表示关断。
 static const uint8_t stepperSequence[8][4] = {
     { 1U, 0U, 0U, 0U }, { 1U, 1U, 0U, 0U }, { 0U, 1U, 0U, 0U }, { 0U, 1U, 1U, 0U },
     { 0U, 0U, 1U, 0U }, { 0U, 0U, 1U, 1U }, { 0U, 0U, 0U, 1U }, { 1U, 0U, 0U, 1U },
