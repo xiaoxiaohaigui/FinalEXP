@@ -49,6 +49,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/LCD12864.c
     Core/Src/led.c
     Core/Src/btn.c
+    Core/Src/servo_motor.c
+    Core/Src/stepper_motor.c
     # Add user sources here
 )
 

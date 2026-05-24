@@ -97,6 +97,8 @@ void Error_Handler(void);
 #define RELAY0_GPIO_Port GPIOB
 #define RELAY1_Pin GPIO_PIN_1
 #define RELAY1_GPIO_Port GPIOB
+#define INFRARED_Pin GPIO_PIN_2
+#define INFRARED_GPIO_Port GPIOB
 #define LED11_Pin GPIO_PIN_11
 #define LED11_GPIO_Port GPIOF
 #define LED12_Pin GPIO_PIN_12
@@ -143,6 +145,16 @@ void Error_Handler(void);
 #define NS_Y_GPIO_Port GPIOD
 #define NS_R_Pin GPIO_PIN_5
 #define NS_R_GPIO_Port GPIOD
+#define STEPPER_A_Pin GPIO_PIN_9
+#define STEPPER_A_GPIO_Port GPIOG
+#define STEPPER_B_Pin GPIO_PIN_10
+#define STEPPER_B_GPIO_Port GPIOG
+#define STEPPER_C_Pin GPIO_PIN_11
+#define STEPPER_C_GPIO_Port GPIOG
+#define STEPPER_D_Pin GPIO_PIN_12
+#define STEPPER_D_GPIO_Port GPIOG
+#define TLC5615_CS_Pin GPIO_PIN_4
+#define TLC5615_CS_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 extern volatile uint16_t
@@ -158,6 +170,20 @@ typedef enum {
     NS_RED_WE_YELLOW   // 状态3：南北红，东西黄
 } TrafficLightState_t; // 交通灯状态
 extern TrafficLightState_t trafficLightState; // 当前交通灯状态
+
+typedef enum {
+    RELAY_CONTROL,
+    STEPPER_MOTOR_CONTROL,
+    DC_MOTOR_CONTROL,
+    SERVO_MOTOR_CONTROL
+} DeviceControlMode_t; // 设备控制模式
+extern volatile DeviceControlMode_t deviceControlMode; // 当前设备控制模式
+
+typedef enum { MOTOR_OFF, MOTOR_ON } MotorStartStopState_t; // 电机开关状态
+extern volatile MotorStartStopState_t motorStartStopState;  // 当前电机开关状态
+
+typedef enum { MOTOR_MODE1, MOTOR_MODE2 } MotorMode_t; // 电机预设模式
+extern volatile MotorMode_t motorMode;     // 当前电机预设模式
 
 extern DMA_HandleTypeDef hdma_usart1_rx; // 声明DMA句柄，供main.c使用
 /* USER CODE END Private defines */

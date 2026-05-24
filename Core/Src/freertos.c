@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "main.h"
 #include "task.h"
 
@@ -29,6 +30,10 @@
 #include "LCD12864.h"
 #include "btn.h"
 #include "led.h"
+#include "servo_motor.h"
+#include "spi.h"
+#include "stepper_motor.h"
+#include <stdio.h>
 #include <string.h>
 
 /* USER CODE END Includes */
@@ -303,17 +308,56 @@ StartSwitchTask(void *argument)
         osMessageQueuePut(DIP2LCDQueueHandle, &dipState, 0, 0);
         osDelay(200);
 
-        // 根据独立按键KEY0和KEY1的状态，控制继电器RELAY0和RELAY1的开关
-        if(keyEvent[0] == KEY_EVENT_CLICK)
+        // 独立按键KEY3控制设备控制模式的切换
+        if(keyEvent[3] == KEY_EVENT_CLICK)
         {
-            keyEvent[0] = KEY_EVENT_NONE; // 清除事件
-            HAL_GPIO_TogglePin(RELAY0_GPIO_Port, RELAY0_Pin);
+            keyEvent[3] = KEY_EVENT_NONE; // 清除事件
+            switch(deviceControlMode)
+            {
+                case RELAY_CONTROL:
+                    deviceControlMode = STEPPER_MOTOR_CONTROL;
+                    break;
+
+                case STEPPER_MOTOR_CONTROL:
+                    deviceControlMode = DC_MOTOR_CONTROL;
+                    break;
+
+                case DC_MOTOR_CONTROL:
+                    deviceControlMode = SERVO_MOTOR_CONTROL;
+                    break;
+
+                case SERVO_MOTOR_CONTROL:
+                    deviceControlMode = RELAY_CONTROL;
+                    break;
+            }
+
+            // 切换设备控制模式时，电机关闭，预设模式重置
+            motorStartStopState = MOTOR_OFF;
+            motorMode = MOTOR_MODE1;
         }
-        if(keyEvent[1] == KEY_EVENT_CLICK)
+
+        // 处于继电器控制模式时，独立按键KEY0和KEY1控制继电器RELAY0和RELAY1的开关
+        if(deviceControlMode == RELAY_CONTROL)
         {
-            keyEvent[1] = KEY_EVENT_NONE; // 清除事件
-            HAL_GPIO_TogglePin(RELAY1_GPIO_Port, RELAY1_Pin);
+            // 根据独立按键KEY0和KEY1的状态，控制继电器RELAY0和RELAY1的开关
+            if(keyEvent[0] == KEY_EVENT_CLICK)
+            {
+                keyEvent[0] = KEY_EVENT_NONE; // 清除事件
+                HAL_GPIO_TogglePin(RELAY0_GPIO_Port, RELAY0_Pin);
+            }
+            if(keyEvent[1] == KEY_EVENT_CLICK)
+            {
+                keyEvent[1] = KEY_EVENT_NONE; // 清除事件
+                HAL_GPIO_TogglePin(RELAY1_GPIO_Port, RELAY1_Pin);
+            }
         }
+        else
+        {
+            // 非继电器控制模式下，继电器断开
+            HAL_GPIO_WritePin(RELAY0_GPIO_Port, RELAY0_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(RELAY1_GPIO_Port, RELAY1_Pin, GPIO_PIN_RESET);
+        }
+        osDelay(100);
     }
     /* USER CODE END StartSwitchTask */
 }
@@ -452,14 +496,48 @@ void
 StartDisplayTask(void *argument)
 {
     /* USER CODE BEGIN StartDisplayTask */
-    LCD_DispString(ROW1, COL1, "Hello, FreeRTOS!");
-
+    // 显存
+    char row1[17] = { 0 };
     char row2[17] = { 0 };
     char row3[17] = { 0 };
+    char row4[17] = { 0 };
+    char row1Text[32] = { 0 };
+    char row4Text[32] = { 0 };
+
     const char *trafficText = "NS:Green WE:Red  ";
+    const char *deviceControlText[] = { "Relay Ctrl", "Stepper   ", "DC Motor  ", "Servo     " };
     /* Infinite loop */
     for(;;)
     {
+        // 在LCD上显示当前的设备控制模式；非继电器模式时追加开关状态
+        if(deviceControlMode == RELAY_CONTROL)
+        {
+            snprintf(row1Text, sizeof(row1Text), "%s", deviceControlText[deviceControlMode]);
+        }
+        else
+        {
+            if(motorStartStopState == MOTOR_ON)
+            {
+                snprintf(row1Text,
+                         sizeof(row1Text),
+                         "%s %u ON ",
+                         deviceControlText[deviceControlMode],
+                         (unsigned int)motorMode + 1U);
+            }
+            else
+            {
+                snprintf(row1Text,
+                         sizeof(row1Text),
+                         "%s %u OFF",
+                         deviceControlText[deviceControlMode],
+                         (unsigned int)motorMode + 1U);
+            }
+        }
+        memset(row1, ' ', 16);
+        memcpy(row1, row1Text, strlen(row1Text) > 16 ? 16 : strlen(row1Text));
+        row1[16] = '\0';
+        LCD_DispString(ROW1, COL1, row1);
+
         // 在LCD上显示当前的交通灯状态，显示在第二行
         switch(trafficLightState)
         {
@@ -504,11 +582,27 @@ StartDisplayTask(void *argument)
             keyEvent[2] = KEY_EVENT_NONE; // 清除事件
             HAL_GPIO_TogglePin(LED14_GPIO_Port, LED14_Pin);
         }
-        if(keyEvent[3] == KEY_EVENT_CLICK)
+
+        // 读取红外接收器状态并在检测到高电平的上升沿时切换显示状态
+        static uint8_t infraredToggleState = 0; // 显示状态（0=OFF,1=ON）
+        static uint8_t prevInfraredLevel = 0;
+        uint8_t currInfraredLevel =
+          HAL_GPIO_ReadPin(INFRARED_GPIO_Port, INFRARED_Pin) == GPIO_PIN_SET ? 1 : 0;
+        if(currInfraredLevel && !prevInfraredLevel)
         {
-            keyEvent[3] = KEY_EVENT_NONE; // 清除事件
-            HAL_GPIO_TogglePin(LED15_GPIO_Port, LED15_Pin);
+            // 检测到由低到高的边沿，切换显示状态
+            infraredToggleState = !infraredToggleState;
         }
+        prevInfraredLevel = currInfraredLevel;
+
+        snprintf(row4Text,
+                 sizeof(row4Text),
+                 "%s",
+                 infraredToggleState ? "Infrared:    ON" : "Infrared:    OFF");
+        memset(row4, ' ', 16);
+        memcpy(row4, row4Text, strlen(row4Text) > 16 ? 16 : strlen(row4Text));
+        row4[16] = '\0';
+        LCD_DispString(ROW4, COL1, row4);
 
         osDelay(100);
     }
@@ -529,7 +623,7 @@ StartSensorTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1);
+        osDelay(100);
     }
     /* USER CODE END StartSensorTask */
 }
@@ -545,10 +639,82 @@ void
 StartMotorTask(void *argument)
 {
     /* USER CODE BEGIN StartMotorTask */
+    Stepper_Init();    // 初始化步进电机
+    ServoMotor_Init(); // 初始化舵机
+
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1);
+        // KEY0用来控制步进电机/直流电机/舵机开关，KEY1用来控制步进电机/直流电机/舵机状态切换
+        if(deviceControlMode != RELAY_CONTROL)
+        {
+            if(keyEvent[0] == KEY_EVENT_CLICK)
+            {
+                keyEvent[0] = KEY_EVENT_NONE; // 清除事件
+                motorStartStopState =
+                  (motorStartStopState == MOTOR_OFF) ? MOTOR_ON : MOTOR_OFF; // 切换电机开关状态
+            }
+            if(keyEvent[1] == KEY_EVENT_CLICK)
+            {
+                keyEvent[1] = KEY_EVENT_NONE; // 清除事件
+                motorMode =
+                  (motorMode == MOTOR_MODE1) ? MOTOR_MODE2 : MOTOR_MODE1; // 切换电机预设模式
+            }
+        }
+
+        // 根据当前的设备控制模式和电机状态，控制对应设备的运行
+        switch(deviceControlMode)
+        {
+            // 步进电机
+            case STEPPER_MOTOR_CONTROL:
+                if(motorStartStopState == MOTOR_ON)
+                {
+                    switch(motorMode)
+                    {
+                        case MOTOR_MODE1:
+                            Stepper_RotateAngle(90.0f, 1000); // 正转90度
+                            osDelay(200);                     // 运行一段时间后再切换状态
+                            break;
+                        case MOTOR_MODE2:
+                            Stepper_RotateAngle(-90.0f, 1000); // 反转90度
+                            osDelay(200);                      // 运行一段时间后再切换状态
+                            break;
+                    }
+                }
+                else
+                {
+                    Stepper_Stop(); // 步进电机关闭时停止输出
+                }
+
+                ServoMotor_Home(); // 其他模式时舵机归零
+                break;
+            // 舵机
+            case SERVO_MOTOR_CONTROL:
+                if(motorStartStopState == MOTOR_ON)
+                {
+                    switch(motorMode)
+                    {
+                        case MOTOR_MODE1:
+                            ServoMotor_Mode1();
+                            break;
+                        case MOTOR_MODE2:
+                            ServoMotor_Mode2();
+                            break;
+                    }
+                }
+                else
+                {
+                    ServoMotor_Home(); // 舵机关闭时归零
+                }
+
+                Stepper_Stop(); // 其他模式时步进电机停止
+                break;
+            default:
+                Stepper_Stop();    // 其他模式时步进电机停止
+                ServoMotor_Home(); // 其他模式时舵机归零
+                break;
+        }
+        osDelay(50);
     }
     /* USER CODE END StartMotorTask */
 }
@@ -567,7 +733,7 @@ StartInfraredTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1);
+        osDelay(100);
     }
     /* USER CODE END StartInfraredTask */
 }
@@ -583,10 +749,25 @@ void
 StartDACTask(void *argument)
 {
     /* USER CODE BEGIN StartDACTask */
+    uint16_t dacValue = 0; // DAC输出值，范围0~1023
+
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1);
+        // 将dacValue转换为12位值，输出到TLC5615
+        uint16_t tlcValue = (dacValue & 0x03FF) << 2; // 左移2位，适配TLC5615的12位输入
+        // 通过SPI DMA发送tlcValue到TLC5615
+        HAL_GPIO_WritePin(TLC5615_CS_GPIO_Port, TLC5615_CS_Pin, GPIO_PIN_RESET); // 片选拉低
+        HAL_SPI_Transmit_DMA(&hspi3, (uint8_t *)&tlcValue, 1);
+        HAL_GPIO_WritePin(TLC5615_CS_GPIO_Port, TLC5615_CS_Pin, GPIO_PIN_SET); // 片选拉高
+
+        // 改变dacValue的值，实现呼吸灯效果
+        dacValue += 25;
+        if(dacValue > 500)
+        {
+            dacValue = 0;
+        }
+        osDelay(100);
     }
     /* USER CODE END StartDACTask */
 }
