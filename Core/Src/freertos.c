@@ -23,6 +23,7 @@
 #include "main.h"
 #include "task.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KeyScan.h"
@@ -47,7 +48,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define BTN_DEBOUNCE_DELAY 40 // 按键消抖时间，单位ms
+#define BTN_DEBOUNCE_DELAY 40 // 按键消抖时间，单位 ms
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -255,7 +256,7 @@ StartBtnTask(void *argument)
                 {
                     debounceCounter++;
                     if(debounceCounter >= BTN_DEBOUNCE_DELAY / 20)
-                    { // 每20ms检查一次
+                    { // 每 20 ms 检查一次
                         btnState = BTN_STATE_PRESSED;
                     }
                 }
@@ -297,7 +298,7 @@ StartSwitchTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // 读取DIP开关状态，发送到DisplayTask显示
+        // 读取 DIP 开关状态，发送到 DisplayTask 显示
         uint8_t dipState = 0;
         dipState |= (HAL_GPIO_ReadPin(DIP0_GPIO_Port, DIP0_Pin) == GPIO_PIN_RESET) ? 0x01 : 0x00;
         dipState |= (HAL_GPIO_ReadPin(DIP1_GPIO_Port, DIP1_Pin) == GPIO_PIN_RESET) ? 0x02 : 0x00;
@@ -310,7 +311,7 @@ StartSwitchTask(void *argument)
         osMessageQueuePut(DIP2LCDQueueHandle, &dipState, 0, 0);
         osDelay(200);
 
-        // 独立按键KEY3控制设备控制模式的切换
+        // 独立按键 KEY3 控制设备控制模式的切换
         if(keyEvent[3] == KEY_EVENT_CLICK)
         {
             keyEvent[3] = KEY_EVENT_NONE; // 清除事件
@@ -338,10 +339,10 @@ StartSwitchTask(void *argument)
             motorMode = MOTOR_MODE1;
         }
 
-        // 处于继电器控制模式时，独立按键KEY0和KEY1控制继电器RELAY0和RELAY1的开关
+        // 处于继电器控制模式时，独立按键 KEY0 和 KEY1 控制继电器 RELAY0 和 RELAY1 的开关
         if(deviceControlMode == RELAY_CONTROL)
         {
-            // 根据独立按键KEY0和KEY1的状态，控制继电器RELAY0和RELAY1的开关
+            // 根据独立按键 KEY0 和 KEY1 的状态，控制继电器 RELAY0 和 RELAY1 的开关
             if(keyEvent[0] == KEY_EVENT_CLICK)
             {
                 keyEvent[0] = KEY_EVENT_NONE; // 清除事件
@@ -393,15 +394,15 @@ StartADCTask(void *argument)
             }
         }
 
-        // 根据当前显示模式，切换LED显示光敏电阻的采样值还是热敏电阻的采样值
+        // 根据当前显示模式，切换 LED 显示光敏电阻的采样值还是热敏电阻的采样值
         if(LED_displayMode == LED_DISPLAY_LIGHT)
         {
-            // 通过板载LED显示光敏电阻的采样值，adc_value[0]，范围0~4095，点亮LED0到LED11
+            // 通过板载 LED 显示光敏电阻的采样值，adc_value[0]，范围 0~4095，点亮 LED0 到 LED11
             LED_Binary_Display(adc_value[0]);
         }
         else if(LED_displayMode == LED_DISPLAY_TEMP)
         {
-            // 通过板载LED显示热敏电阻的采样值，adc_value[1]，范围0~4095，点亮LED0到LED11
+            // 通过板载 LED 显示热敏电阻的采样值，adc_value[1]，范围 0~4095，点亮 LED0 到 LED11
             LED_Binary_Display(adc_value[1]);
         }
         osDelay(200);
@@ -420,11 +421,13 @@ void
 StartUARTTask(void *argument)
 {
     /* USER CODE BEGIN StartUARTTask */
-
+    // 串口实验相关代码位于中断回调函数 HAL_UARTEx_RxEventCallback 中，接收数据并回显
+    // DHT11 和 DS18B20 的数据上传相关代码位于 StartSensorTask 中
+    // 此任务目前暂不使用，保持空闲
     /* Infinite loop */
     for(;;)
     {
-        osDelay(50);
+        osDelay(1000);
     }
     /* USER CODE END StartUARTTask */
 }
@@ -443,7 +446,7 @@ StartTrafficTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // 根据trafficLightState的状态，控制交通灯的LED显示(低电平点亮LED)
+        // 根据 trafficLightState 的状态，控制交通灯的 LED 显示(低电平点亮 LED)
         switch(trafficLightState)
         {
             case NS_GREEN_WE_RED:
@@ -511,7 +514,7 @@ StartDisplayTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // 在LCD上显示当前的设备控制模式；非继电器模式时追加开关状态
+        // 在 LCD 上显示当前的设备控制模式；非继电器模式时追加开关状态
         if(deviceControlMode == RELAY_CONTROL)
         {
             snprintf(row1Text, sizeof(row1Text), "%s", deviceControlText[deviceControlMode]);
@@ -540,7 +543,7 @@ StartDisplayTask(void *argument)
         row1[16] = '\0';
         LCD_DispString(ROW1, COL1, row1);
 
-        // 在LCD上显示当前的交通灯状态，显示在第二行
+        // 在 LCD 上显示当前的交通灯状态，显示在第二行
         switch(trafficLightState)
         {
             case NS_GREEN_WE_RED:
@@ -564,7 +567,7 @@ StartDisplayTask(void *argument)
         row2[16] = '\0';
         LCD_DispString(ROW2, COL1, row2);
 
-        // 从消息队列接收DIP开关状态，显示在第三行，每次显示两位
+        // 从消息队列接收 DIP 开关状态，显示在第三行，每次显示两位
         uint8_t dipState;
         osMessageQueueGet(DIP2LCDQueueHandle, &dipState, 0, 0);
         memcpy(row3, "DIP:    ", 8);
@@ -578,15 +581,15 @@ StartDisplayTask(void *argument)
         row3[16] = '\0';
         LCD_DispString(ROW3, COL1, row3);
 
-        // 根据独立按键状态控制LED的开关
+        // 根据独立按键状态控制 LED 的开关
         if(keyEvent[2] == KEY_EVENT_CLICK)
         {
             keyEvent[2] = KEY_EVENT_NONE; // 清除事件
             HAL_GPIO_TogglePin(LED14_GPIO_Port, LED14_Pin);
         }
 
-        // 读取红外接收器状态并在检测到高电平的上升沿时切换显示状态
-        static uint8_t infraredToggleState = 0; // 显示状态（0=OFF,1=ON）
+        // 读取红外接收器状态，并在检测到高电平的上升沿时切换显示状态
+        static uint8_t infraredToggleState = 0; // 显示状态（0 = OFF，1 = ON）
         static uint8_t prevInfraredLevel = 0;
         uint8_t currInfraredLevel =
           HAL_GPIO_ReadPin(INFRARED_GPIO_Port, INFRARED_Pin) == GPIO_PIN_SET ? 1 : 0;
@@ -623,23 +626,23 @@ StartSensorTask(void *argument)
 {
     /* USER CODE BEGIN StartSensorTask */
     // 初始化传感器
-    DHT11_Init();   // 初始化DHT11温湿度传感器
-    DS18B20_Init(); // 初始化DS18B20温度传感器
+    DHT11_Init();   // 初始化 DHT11 温湿度传感器
+    DS18B20_Init(); // 初始化 DS18B20 温度传感器
 
     /* Infinite loop */
     for(;;)
     {
-        // 关闭TIM5中断，保证测量原子性
+        // 关闭 TIM5 中断，保证测量原子性
         HAL_TIM_Base_Stop_IT(&htim5);
 
-        // 读取DHT11和DS18B20传感器数据，并通过DMA发送到上位机
+        // 读取 DHT11 和 DS18B20 传感器数据，并通过 DMA 发送到上位机
         (void)DHT11_ReadAndSendDma();
         (void)DS18B20_ReadAndSendDma();
 
-        // 开启TIM5中断
+        // 开启 TIM5 中断
         HAL_TIM_Base_Start_IT(&htim5);
 
-        osDelay(2000); // 每2秒读取一次传感器数据
+        osDelay(2000); // 每 2 秒读取一次传感器数据
     }
     /* USER CODE END StartSensorTask */
 }
@@ -662,7 +665,8 @@ StartMotorTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // KEY0用来控制步进电机/直流电机/舵机开关，KEY1用来控制步进电机/直流电机/舵机状态切换
+        // KEY0 用来控制步进电机 / 直流电机 / 舵机开关，KEY1 用来控制步进电机 / 直流电机 /
+        // 舵机状态切换
         if(deviceControlMode != RELAY_CONTROL)
         {
             if(keyEvent[0] == KEY_EVENT_CLICK)
@@ -689,11 +693,11 @@ StartMotorTask(void *argument)
                     switch(motorMode)
                     {
                         case MOTOR_MODE1:
-                            Stepper_RotateAngle(90.0f, 1000); // 正转90度
+                            Stepper_RotateAngle(90.0f, 1000); // 正转 90 度
                             osDelay(200);                     // 运行一段时间后再切换状态
                             break;
                         case MOTOR_MODE2:
-                            Stepper_RotateAngle(-90.0f, 1000); // 反转90度
+                            Stepper_RotateAngle(-90.0f, 1000); // 反转 90 度
                             osDelay(200);                      // 运行一段时间后再切换状态
                             break;
                     }
@@ -792,19 +796,19 @@ void
 StartDACTask(void *argument)
 {
     /* USER CODE BEGIN StartDACTask */
-    uint16_t dacValue = 0; // DAC输出值，范围0~1023
+    uint16_t dacValue = 0; // DAC 输出值，范围 0~1023
 
     /* Infinite loop */
     for(;;)
     {
-        // 将dacValue转换为12位值，输出到TLC5615
-        uint16_t tlcValue = (dacValue & 0x03FF) << 2; // 左移2位，适配TLC5615的12位输入
-        // 通过SPI DMA发送tlcValue到TLC5615
+        // 将 dacValue 转换为 12 位值，输出到 TLC5615
+        uint16_t tlcValue = (dacValue & 0x03FF) << 2; // 左移 2 位，适配 TLC5615 的 12 位输入
+        // 通过 SPI DMA 发送 tlcValue 到 TLC5615
         HAL_GPIO_WritePin(TLC5615_CS_GPIO_Port, TLC5615_CS_Pin, GPIO_PIN_RESET); // 片选拉低
         HAL_SPI_Transmit_DMA(&hspi3, (uint8_t *)&tlcValue, 1);
         HAL_GPIO_WritePin(TLC5615_CS_GPIO_Port, TLC5615_CS_Pin, GPIO_PIN_SET); // 片选拉高
 
-        // 改变dacValue的值，实现呼吸灯效果
+        // 改变 dacValue 的值，实现呼吸灯效果
         dacValue += 25;
         if(dacValue > 500)
         {

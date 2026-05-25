@@ -22,10 +22,10 @@ typedef struct
 		int16_t temperature_x10;
 } DS18B20_Data;
 
-void DS18B20_Init(void); /* 初始化驱动（GPIO需配置为开漏输出并有上拉） */
-int DS18B20_Read(DS18B20_Data *out); /* 读取温度，成功返回0 */
-HAL_StatusTypeDef DS18B20_SendDma(const DS18B20_Data *data); /* DMA发送温度字符串 */
-int DS18B20_ReadAndSendDma(void); /* 读取并DMA发送，成功返回0 */
+void DS18B20_Init(void); /* 初始化驱动（GPIO 需配置为开漏输出并有上拉） */
+int DS18B20_Read(DS18B20_Data *out); /* 读取温度，成功返回 0 */
+HAL_StatusTypeDef DS18B20_SendDma(const DS18B20_Data *data); /* DMA 发送温度字符串 */
+int DS18B20_ReadAndSendDma(void); /* 读取并 DMA 发送，成功返回 0 */
 
 #ifdef __cplusplus
 }

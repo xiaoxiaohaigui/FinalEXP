@@ -3,13 +3,15 @@
 #include "stm32f1xx_hal_gpio.h"
 #include <sys/types.h>
 
+// 对于此项目(FinalEXP)，无需使用 LED12 ~ LED15，因此相关代码已加上注释，避免误操作导致不必要的麻烦
+
 // 输入数字控制流水灯状态
 void
 LED_Flow(uint8_t state)
 {
-    // 共16个LED
+    // 共 16 个 LED
 
-    // 清空LED状态
+    // 清空 LED 状态
     HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
     HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
@@ -27,7 +29,7 @@ LED_Flow(uint8_t state)
     // HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_SET);
     // HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_SET);
 
-    // 根据输入状态点亮对应LED，如state=0，则点亮LED0到LED7
+    // 根据输入状态点亮对应 LED，如 state = 0，则点亮 LED0 到 LED7
     if(state >= 0 && state < 12)
     {
         uint8_t counter = 0;
@@ -71,25 +73,25 @@ LED_Flow(uint8_t state)
                 case 11:
                     HAL_GPIO_WritePin(LED11_GPIO_Port, LED11_Pin, GPIO_PIN_RESET);
                     break;
-                // case 12:
-                //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 13:
-                //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 14:
-                //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 15:
-                //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_RESET);
-                //     break;
+                    // case 12:
+                    //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 13:
+                    //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 14:
+                    //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 15:
+                    //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_RESET);
+                    //     break;
             }
             counter++;
         }
     }
 }
 
-// 输入数字，以二进制形式显示到LED0~LED15上
+// 输入数字，以二进制形式显示到 LED0 ~ LED15 上
 void
 LED_Binary_Display(uint16_t value)
 {
@@ -97,7 +99,7 @@ LED_Binary_Display(uint16_t value)
     {
         if(value & (1 << i))
         {
-            // 点亮对应LED
+            // 点亮对应 LED
             switch(i)
             {
                 case 0:
@@ -136,23 +138,23 @@ LED_Binary_Display(uint16_t value)
                 case 11:
                     HAL_GPIO_WritePin(LED11_GPIO_Port, LED11_Pin, GPIO_PIN_RESET);
                     break;
-                // case 12:
-                //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 13:
-                //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 14:
-                //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_RESET);
-                //     break;
-                // case 15:
-                //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_RESET);
-                //     break;
+                    // case 12:
+                    //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 13:
+                    //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 14:
+                    //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_RESET);
+                    //     break;
+                    // case 15:
+                    //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_RESET);
+                    //     break;
             }
         }
         else
         {
-            // 熄灭对应LED
+            // 熄灭对应 LED
             switch(i)
             {
                 case 0:
@@ -191,24 +193,24 @@ LED_Binary_Display(uint16_t value)
                 case 11:
                     HAL_GPIO_WritePin(LED11_GPIO_Port, LED11_Pin, GPIO_PIN_SET);
                     break;
-                // case 12:
-                //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_SET);
-                //     break;
-                // case 13:
-                //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_SET);
-                //     break;
-                // case 14:
-                //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_SET);
-                //     break;
-                // case 15:
-                //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_SET);
-                //     break;
+                    // case 12:
+                    //     HAL_GPIO_WritePin(LED12_GPIO_Port, LED12_Pin, GPIO_PIN_SET);
+                    //     break;
+                    // case 13:
+                    //     HAL_GPIO_WritePin(LED13_GPIO_Port, LED13_Pin, GPIO_PIN_SET);
+                    //     break;
+                    // case 14:
+                    //     HAL_GPIO_WritePin(LED14_GPIO_Port, LED14_Pin, GPIO_PIN_SET);
+                    //     break;
+                    // case 15:
+                    //     HAL_GPIO_WritePin(LED15_GPIO_Port, LED15_Pin, GPIO_PIN_SET);
+                    //     break;
             }
         }
     }
 }
 
-// 熄灭所有LED
+// 熄灭所有 LED
 void
 LED_Turn_off_All(void)
 {

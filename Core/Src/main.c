@@ -56,8 +56,8 @@
 
 /* USER CODE BEGIN PV */
 volatile uint16_t
-  adc_value[2];     // 存放ADC值，adc_value[0]存放光敏电阻的采样值，adc_value[1]存放热敏电阻的采样值
-uint8_t rxData[50]; // 接收缓冲区(用于回显)
+  adc_value[2]; // 存放 ADC 值，adc_value[0] 存放光敏电阻的采样值，adc_value[1] 存放热敏电阻的采样值
+uint8_t rxData[50]; // 接收缓冲区（用于回显）
 
 /* USER CODE END PV */
 
@@ -120,21 +120,21 @@ main(void)
     Btn_Init();
     KeyScan_Init();
 
-    // 初始化LCD12864
+    // 初始化 LCD12864
     Delay_Init();
     LCD_Init();
     LCD_Clear();
 
-    // 启动ADC DMA采集，连续采集光敏电阻和热敏电阻的模拟值，并存放到adc_value数组中
+    // 启动 ADC DMA 采集，连续采集光敏电阻和热敏电阻的模拟值，并存放到 adc_value 数组中
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_value, 2);
 
-    // 启动TIM5中断，用于每3秒切换一次交通灯状态
+    // 启动 TIM5 中断，用于每 3 秒切换一次交通灯状态
     HAL_TIM_Base_Start_IT(&htim5);
 
-    // 启动UART接收，使用空闲中断模式，接收数据存放到rxData数组中
+    // 启动 UART 接收，使用空闲中断模式，接收数据存放到 rxData 数组中
     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rxData, sizeof(rxData));
 
-    // 关闭DMA传输过半中断
+    // 关闭 DMA 传输过半中断
     __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
     /* USER CODE END 2 */
 
@@ -213,7 +213,7 @@ HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     {
         // 回显接收到的数据
         HAL_UART_Transmit_DMA(&huart1, rxData, Size);
-        // 重新启动UART接收
+        // 重新启动 UART 接收
         HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rxData, sizeof(rxData));
     }
 }
@@ -233,7 +233,7 @@ HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     /* USER CODE BEGIN Callback 0 */
     if(htim->Instance == TIM5)
     {
-        // 每3秒切换一次交通灯状态
+        // 每 3 秒切换一次交通灯状态
         switch(trafficLightState)
         {
             case NS_GREEN_WE_RED:

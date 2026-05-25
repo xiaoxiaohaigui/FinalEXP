@@ -101,8 +101,6 @@ void Error_Handler(void);
 #define RELAY0_GPIO_Port GPIOB
 #define RELAY1_Pin GPIO_PIN_1
 #define RELAY1_GPIO_Port GPIOB
-#define INFRARED_Pin GPIO_PIN_2
-#define INFRARED_GPIO_Port GPIOB
 #define LED11_Pin GPIO_PIN_11
 #define LED11_GPIO_Port GPIOF
 #define LED12_Pin GPIO_PIN_12
@@ -162,16 +160,16 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 extern volatile uint16_t
-  adc_value[2]; // 存放ADC值，adc_value[0]存放光敏电阻的采样值，adc_value[1]存放热敏电阻的采样值
+  adc_value[2]; // 存放 ADC 值，adc_value[0] 存放光敏电阻的采样值，adc_value[1] 存放热敏电阻的采样值
 
 typedef enum { LED_DISPLAY_LIGHT, LED_DISPLAY_TEMP } LED_DisplayMode_t; // 显示模式，显示光敏电阻还是热敏电阻
 extern LED_DisplayMode_t LED_displayMode; // 当前显示模式
 
 typedef enum {
-    NS_GREEN_WE_RED,   // 状态0：南北绿，东西红
-    NS_YELLOW_WE_RED,  // 状态1：南北黄，东西红
-    NS_RED_WE_GREEN,   // 状态2：南北红，东西绿
-    NS_RED_WE_YELLOW   // 状态3：南北红，东西黄
+    NS_GREEN_WE_RED,   // 状态 0：南北绿，东西红
+    NS_YELLOW_WE_RED,  // 状态 1：南北黄，东西红
+    NS_RED_WE_GREEN,   // 状态 2：南北红，东西绿
+    NS_RED_WE_YELLOW   // 状态 3：南北红，东西黄
 } TrafficLightState_t; // 交通灯状态
 extern TrafficLightState_t trafficLightState; // 当前交通灯状态
 
@@ -189,7 +187,7 @@ extern volatile MotorStartStopState_t motorStartStopState;  // 当前电机开�
 typedef enum { MOTOR_MODE1, MOTOR_MODE2 } MotorMode_t; // 电机预设模式
 extern volatile MotorMode_t motorMode;     // 当前电机预设模式
 
-extern DMA_HandleTypeDef hdma_usart1_rx; // 声明DMA句柄，供main.c使用
+extern DMA_HandleTypeDef hdma_usart1_rx; // 声明 DMA 句柄，供 main.c 使用
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -29,7 +29,7 @@ DHT11_WaitForState(GPIO_PinState state, uint16_t timeout_us)
     return 1;
 }
 
-/* 等待指定电平结束（带超时，单位us） */
+/* 等待指定电平结束（带超时，单位 us） */
 static int
 DHT11_WaitLevelEnd(GPIO_PinState state, uint16_t timeout_us)
 {
@@ -80,7 +80,7 @@ DHT11_Check_Response(void)
     return 1;
 }
 
-/* 读取1字节数据 */
+/* 读取 1 字节数据 */
 static int
 DHT11_Read_Byte(uint8_t *out)
 {
@@ -122,7 +122,7 @@ DHT11_Read_Byte(uint8_t *out)
     return 1;
 }
 
-/* 初始化驱动（依赖外部已配置GPIO） */
+/* 初始化驱动（依赖外部已配置 GPIO） */
 void
 DHT11_Init(void)
 {
@@ -131,7 +131,7 @@ DHT11_Init(void)
     Delay_us(1000);
 }
 
-/* 读取温湿度数据，成功返回0 */
+/* 读取温湿度数据，成功返回 0 */
 int
 DHT11_Read(DHT11_Data *out)
 {
@@ -169,7 +169,7 @@ DHT11_Read(DHT11_Data *out)
     return 0;
 }
 
-/* 使用UART1 DMA发送测量值 */
+/* 使用 UART1 DMA 发送测量值 */
 HAL_StatusTypeDef
 DHT11_SendDma(const DHT11_Data *data)
 {
@@ -201,7 +201,7 @@ DHT11_SendDma(const DHT11_Data *data)
     return HAL_UART_Transmit_DMA(&huart1, (uint8_t *)tx_buf, (uint16_t)len);
 }
 
-/* 读取并通过DMA发送，成功返回0 */
+/* 读取并通过 DMA 发送，成功返回 0 */
 int
 DHT11_ReadAndSendDma(void)
 {

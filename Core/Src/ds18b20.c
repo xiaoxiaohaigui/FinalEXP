@@ -40,7 +40,7 @@ DS18B20_Release(uint16_t us)
     }
 }
 
-/* 复位并检测存在脉冲，成功返回1 */
+/* 复位并检测存在脉冲，成功返回 1 */
 static int
 DS18B20_Reset(void)
 {
@@ -57,7 +57,7 @@ DS18B20_Reset(void)
     return 1;
 }
 
-/* 写1位数据 */
+/* 写 1 位数据 */
 static void
 DS18B20_WriteBit(uint8_t bit)
 {
@@ -73,7 +73,7 @@ DS18B20_WriteBit(uint8_t bit)
     }
 }
 
-/* 读1位数据 */
+/* 读 1 位数据 */
 static uint8_t
 DS18B20_ReadBit(void)
 {
@@ -87,7 +87,7 @@ DS18B20_ReadBit(void)
     return bit;
 }
 
-/* 写1字节（LSB first） */
+/* 写 1 字节（LSB first） */
 static void
 DS18B20_WriteByte(uint8_t data)
 {
@@ -98,7 +98,7 @@ DS18B20_WriteByte(uint8_t data)
     }
 }
 
-/* 读1字节（LSB first） */
+/* 读 1 字节（LSB first） */
 static uint8_t
 DS18B20_ReadByte(void)
 {
