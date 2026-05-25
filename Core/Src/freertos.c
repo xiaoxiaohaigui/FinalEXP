@@ -29,6 +29,8 @@
 #include "LCD12864.h"
 #include "btn.h"
 #include "dc_motor.h"
+#include "dht11.h"
+#include "ds18b20.h"
 #include "led.h"
 #include "servo_motor.h"
 #include "spi.h"
@@ -620,10 +622,24 @@ void
 StartSensorTask(void *argument)
 {
     /* USER CODE BEGIN StartSensorTask */
+    // 初始化传感器
+    DHT11_Init();   // 初始化DHT11温湿度传感器
+    DS18B20_Init(); // 初始化DS18B20温度传感器
+
     /* Infinite loop */
     for(;;)
     {
-        osDelay(100);
+        // 关闭TIM5中断，保证测量原子性
+        HAL_TIM_Base_Stop_IT(&htim5);
+
+        // 读取DHT11和DS18B20传感器数据，并通过DMA发送到上位机
+        (void)DHT11_ReadAndSendDma();
+        (void)DS18B20_ReadAndSendDma();
+
+        // 开启TIM5中断
+        HAL_TIM_Base_Start_IT(&htim5);
+
+        osDelay(2000); // 每2秒读取一次传感器数据
     }
     /* USER CODE END StartSensorTask */
 }

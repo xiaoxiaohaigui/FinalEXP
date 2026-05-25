@@ -93,6 +93,10 @@ void Error_Handler(void);
 #define LCD12864_CLK_GPIO_Port GPIOA
 #define LCD12864_RST_Pin GPIO_PIN_7
 #define LCD12864_RST_GPIO_Port GPIOA
+#define DHT11_Pin GPIO_PIN_4
+#define DHT11_GPIO_Port GPIOC
+#define DS18B20_Pin GPIO_PIN_5
+#define DS18B20_GPIO_Port GPIOC
 #define RELAY0_Pin GPIO_PIN_0
 #define RELAY0_GPIO_Port GPIOB
 #define RELAY1_Pin GPIO_PIN_1

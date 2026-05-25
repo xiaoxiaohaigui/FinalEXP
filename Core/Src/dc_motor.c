@@ -7,19 +7,19 @@
 
 static uint8_t dcMotorStarted = 0U;
 
-/* 确保 TIM1 的 CH1/CH2 PWM 只启动一次。 */
+/* 确保 TIM4 的 CH1/CH2 PWM 只启动一次。 */
 static void
 DCMotor_StartPwm(void)
 {
     if(dcMotorStarted == 0U)
     {
-        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-        HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+        HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
         dcMotorStarted = 1U;
     }
 }
 
-/* 将百分比占空比换算为 TIM1 比较值。 */
+/* 将百分比占空比换算为 TIM4 比较值。 */
 static void
 DCMotor_SetCompare(uint32_t channel, uint8_t dutyPercent)
 {
@@ -29,9 +29,9 @@ DCMotor_SetCompare(uint32_t channel, uint8_t dutyPercent)
         clampedDuty = DCMOTOR_PWM_MAX_PERCENT;
     }
 
-    uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim1) + 1U;
+    uint32_t period = __HAL_TIM_GET_AUTORELOAD(&htim4) + 1U;
     uint32_t compare = (period * clampedDuty) / DCMOTOR_PWM_MAX_PERCENT;
-    __HAL_TIM_SET_COMPARE(&htim1, channel, compare);
+    __HAL_TIM_SET_COMPARE(&htim4, channel, compare);
 }
 
 /* 初始化直流电机驱动，默认进入制动状态。 */
