@@ -23,7 +23,6 @@
 #include "main.h"
 #include "task.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KeyScan.h"
@@ -32,10 +31,12 @@
 #include "dc_motor.h"
 #include "dht11.h"
 #include "ds18b20.h"
+#include "ir_receiver.h"
 #include "led.h"
 #include "servo_motor.h"
 #include "spi.h"
 #include "stepper_motor.h"
+#include "usart.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -133,6 +134,9 @@ const osThreadAttr_t DACTask_attributes = {
 /* Definitions for DIP2LCDQueue */
 osMessageQueueId_t DIP2LCDQueueHandle;
 const osMessageQueueAttr_t DIP2LCDQueue_attributes = { .name = "DIP2LCDQueue" };
+/* Definitions for UARTTXQueue */
+osMessageQueueId_t UARTTXQueueHandle;
+const osMessageQueueAttr_t UARTTXQueue_attributes = { .name = "UARTTXQueue" };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -179,6 +183,9 @@ MX_FREERTOS_Init(void)
     /* Create the queue(s) */
     /* creation of DIP2LCDQueue */
     DIP2LCDQueueHandle = osMessageQueueNew(2, sizeof(uint8_t), &DIP2LCDQueue_attributes);
+
+    /* creation of UARTTXQueue */
+    UARTTXQueueHandle = osMessageQueueNew(8, sizeof(UartMsg_t), &UARTTXQueue_attributes);
 
     /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
@@ -421,13 +428,32 @@ void
 StartUARTTask(void *argument)
 {
     /* USER CODE BEGIN StartUARTTask */
-    // 串口实验相关代码位于中断回调函数 HAL_UARTEx_RxEventCallback 中，接收数据并回显
-    // DHT11 和 DS18B20 的数据上传相关代码位于 StartSensorTask 中
-    // 此任务目前暂不使用，保持空闲
+    UartMsg_t msg;
     /* Infinite loop */
     for(;;)
     {
-        osDelay(1000);
+        // 从 UART 接收队列获取数据，并通过 UART 发送出去
+        if(osMessageQueueGet(UARTTXQueueHandle, &msg, NULL, osWaitForever) == osOK)
+        {
+            if(msg.len > 0)
+            {
+                if(msg.len > UART_TX_MAX_LEN)
+                {
+                    msg.len = UART_TX_MAX_LEN;
+                }
+
+                while(HAL_UART_Transmit_DMA(&huart1, msg.data, msg.len) != HAL_OK)
+                {
+                    osDelay(10);
+                }
+
+                while(huart1.gState != HAL_UART_STATE_READY)
+                {
+                    osDelay(10);
+                }
+            }
+        }
+        osDelay(100);
     }
     /* USER CODE END StartUARTTask */
 }
@@ -581,29 +607,15 @@ StartDisplayTask(void *argument)
         row3[16] = '\0';
         LCD_DispString(ROW3, COL1, row3);
 
-        // 根据独立按键状态控制 LED 的开关
+        // 按键 2 暂时无用，先用于控制 LED 14 亮灭
         if(keyEvent[2] == KEY_EVENT_CLICK)
         {
             keyEvent[2] = KEY_EVENT_NONE; // 清除事件
             HAL_GPIO_TogglePin(LED14_GPIO_Port, LED14_Pin);
         }
 
-        // 读取红外接收器状态，并在检测到高电平的上升沿时切换显示状态
-        static uint8_t infraredToggleState = 0; // 显示状态（0 = OFF，1 = ON）
-        static uint8_t prevInfraredLevel = 0;
-        uint8_t currInfraredLevel =
-          HAL_GPIO_ReadPin(INFRARED_GPIO_Port, INFRARED_Pin) == GPIO_PIN_SET ? 1 : 0;
-        if(currInfraredLevel && !prevInfraredLevel)
-        {
-            // 检测到由低到高的边沿，切换显示状态
-            infraredToggleState = !infraredToggleState;
-        }
-        prevInfraredLevel = currInfraredLevel;
-
-        snprintf(row4Text,
-                 sizeof(row4Text),
-                 "%s",
-                 infraredToggleState ? "Infrared:    ON" : "Infrared:    OFF");
+        // 第四行内容待改
+        snprintf(row4Text, sizeof(row4Text), "%s", "Enter text");
         memset(row4, ' ', 16);
         memcpy(row4, row4Text, strlen(row4Text) > 16 ? 16 : strlen(row4Text));
         row4[16] = '\0';
@@ -635,9 +647,56 @@ StartSensorTask(void *argument)
         // 关闭 TIM5 中断，保证测量原子性
         HAL_TIM_Base_Stop_IT(&htim5);
 
-        // 读取 DHT11 和 DS18B20 传感器数据，并通过 DMA 发送到上位机
-        (void)DHT11_ReadAndSendDma();
-        (void)DS18B20_ReadAndSendDma();
+        // 读取 DHT11 和 DS18B20 传感器数据，并通过 UART 发送队列发送到上位机
+        DHT11_Data dht11_data;
+        if(DHT11_Read(&dht11_data) == 0)
+        {
+            UartMsg_t msg;
+            int len = snprintf((char *)msg.data,
+                               sizeof(msg.data),
+                               "DHT11 H:%u.%u T:%u.%u\r\n",
+                               (unsigned int)dht11_data.humidity_int,
+                               (unsigned int)dht11_data.humidity_dec,
+                               (unsigned int)dht11_data.temperature_int,
+                               (unsigned int)dht11_data.temperature_dec);
+
+            if(len > 0)
+            {
+                if(len > UART_TX_MAX_LEN)
+                {
+                    len = UART_TX_MAX_LEN;
+                }
+                msg.len = (uint16_t)len;
+                (void)osMessageQueuePut(UARTTXQueueHandle, &msg, 0, 0);
+            }
+        }
+
+        DS18B20_Data ds18b20_data;
+        if(DS18B20_Read(&ds18b20_data) == 0)
+        {
+            UartMsg_t msg;
+            int16_t temp_x10 = ds18b20_data.temperature_x10;
+            int16_t abs_x10 = (temp_x10 < 0) ? (int16_t)(-temp_x10) : temp_x10;
+            int16_t int_part = (int16_t)(abs_x10 / 10);
+            int16_t dec_part = (int16_t)(abs_x10 % 10);
+            char sign = (temp_x10 < 0) ? '-' : '+';
+            int len = snprintf((char *)msg.data,
+                               sizeof(msg.data),
+                               "DS18B20 T:%c%d.%d\r\n",
+                               sign,
+                               (int)int_part,
+                               (int)dec_part);
+
+            if(len > 0)
+            {
+                if(len > UART_TX_MAX_LEN)
+                {
+                    len = UART_TX_MAX_LEN;
+                }
+                msg.len = (uint16_t)len;
+                (void)osMessageQueuePut(UARTTXQueueHandle, &msg, 0, 0);
+            }
+        }
 
         // 开启 TIM5 中断
         HAL_TIM_Base_Start_IT(&htim5);
@@ -780,6 +839,105 @@ StartInfraredTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
+        // 读取红外接收器状态，并通过串口输出按键值
+        if(IR_Is_Data_Ready())
+        {
+            // 重复码不发送，只发送首次按键和不同按键的切换
+            if(!IR_Is_Repeat())
+            {
+                uint8_t cmd = IR_Get_Command();
+                const char *irKey = IR_Get_Key();
+
+                // ── 红外遥控控制逻辑 ──────────────────────────────
+                if(cmd == 0x40) // NEXT: 向后切换设备控制模式
+                {
+                    switch(deviceControlMode)
+                    {
+                        case RELAY_CONTROL:
+                            deviceControlMode = STEPPER_MOTOR_CONTROL;
+                            break;
+                        case STEPPER_MOTOR_CONTROL:
+                            deviceControlMode = DC_MOTOR_CONTROL;
+                            break;
+                        case DC_MOTOR_CONTROL:
+                            deviceControlMode = SERVO_MOTOR_CONTROL;
+                            break;
+                        case SERVO_MOTOR_CONTROL:
+                            deviceControlMode = RELAY_CONTROL;
+                            break;
+                    }
+                    // 切换设备控制模式时，电机关闭，预设模式重置
+                    motorStartStopState = MOTOR_OFF;
+                    motorMode = MOTOR_MODE1;
+                }
+                else if(cmd == 0x44) // PREV: 向前切换设备控制模式
+                {
+                    switch(deviceControlMode)
+                    {
+                        case RELAY_CONTROL:
+                            deviceControlMode = SERVO_MOTOR_CONTROL;
+                            break;
+                        case SERVO_MOTOR_CONTROL:
+                            deviceControlMode = DC_MOTOR_CONTROL;
+                            break;
+                        case DC_MOTOR_CONTROL:
+                            deviceControlMode = STEPPER_MOTOR_CONTROL;
+                            break;
+                        case STEPPER_MOTOR_CONTROL:
+                            deviceControlMode = RELAY_CONTROL;
+                            break;
+                    }
+                    // 切换设备控制模式时，电机关闭，预设模式重置
+                    motorStartStopState = MOTOR_OFF;
+                    motorMode = MOTOR_MODE1;
+                }
+                else if(cmd == 0x45) // CH-: 继电器模式控制 RELAY0；非继电器模式切换预设模式
+                {
+                    if(deviceControlMode == RELAY_CONTROL)
+                    {
+                        HAL_GPIO_TogglePin(RELAY0_GPIO_Port, RELAY0_Pin);
+                    }
+                    else
+                    {
+                        motorMode = (motorMode == MOTOR_MODE1) ? MOTOR_MODE2 : MOTOR_MODE1;
+                    }
+                }
+                else if(cmd == 0x47) // CH+: 继电器模式控制 RELAY1；非继电器模式切换预设模式
+                {
+                    if(deviceControlMode == RELAY_CONTROL)
+                    {
+                        HAL_GPIO_TogglePin(RELAY1_GPIO_Port, RELAY1_Pin);
+                    }
+                    else
+                    {
+                        motorMode = (motorMode == MOTOR_MODE1) ? MOTOR_MODE2 : MOTOR_MODE1;
+                    }
+                }
+                else if(cmd == 0x43) // PLAY/PAUSE: 非继电器模式下控制电机开关
+                {
+                    if(deviceControlMode != RELAY_CONTROL)
+                    {
+                        motorStartStopState =
+                          (motorStartStopState == MOTOR_OFF) ? MOTOR_ON : MOTOR_OFF;
+                    }
+                }
+
+                // 通过串口输出按键值
+                UartMsg_t msg;
+                int len = snprintf((char *)msg.data, sizeof(msg.data), "IR Key: %s\r\n", irKey);
+                if(len > 0)
+                {
+                    if(len > UART_TX_MAX_LEN)
+                    {
+                        len = UART_TX_MAX_LEN;
+                    }
+                    msg.len = (uint16_t)len;
+                    (void)osMessageQueuePut(UARTTXQueueHandle, &msg, 0, 0);
+                }
+            }
+            // 无论是否发送，都需清除数据就绪标志以接收下一帧
+            IR_Clear_Data_Ready();
+        }
         osDelay(100);
     }
     /* USER CODE END StartInfraredTask */

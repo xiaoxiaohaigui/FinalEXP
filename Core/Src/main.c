@@ -26,7 +26,6 @@
 #include "tim.h"
 #include "usart.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "DelayUs.h"
@@ -34,6 +33,8 @@
 #include "LCD12864.h"
 #include "btn.h"
 #include "dc_motor.h"
+#include "ir_receiver.h"
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -65,6 +66,7 @@ uint8_t rxData[50]; // 接收缓冲区（用于回显）
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
+extern osMessageQueueId_t UARTTXQueueHandle;
 
 /* USER CODE END PFP */
 
@@ -124,6 +126,7 @@ main(void)
     Delay_Init();
     LCD_Init();
     LCD_Clear();
+    IR_Receiver_Init(); // 初始化红外接收器
 
     // 启动 ADC DMA 采集，连续采集光敏电阻和热敏电阻的模拟值，并存放到 adc_value 数组中
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_value, 2);
@@ -211,8 +214,21 @@ HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if(huart->Instance == USART1)
     {
-        // 回显接收到的数据
-        HAL_UART_Transmit_DMA(&huart1, rxData, Size);
+        // 回显接收到的数据（通过 UART 发送队列）
+        if(UARTTXQueueHandle != NULL)
+        {
+            UartMsg_t msg;
+            uint16_t copy_len = Size;
+
+            if(copy_len > UART_TX_MAX_LEN)
+            {
+                copy_len = UART_TX_MAX_LEN;
+            }
+
+            msg.len = copy_len;
+            memcpy(msg.data, rxData, copy_len);
+            (void)osMessageQueuePut(UARTTXQueueHandle, &msg, 0, 0);
+        }
         // 重新启动 UART 接收
         HAL_UARTEx_ReceiveToIdle_DMA(&huart1, rxData, sizeof(rxData));
     }

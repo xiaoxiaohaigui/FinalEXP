@@ -36,6 +36,11 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct
+{
+  uint16_t len;
+  uint8_t data[64];
+} UartMsg_t;
 
 /* USER CODE END ET */
 
@@ -111,6 +116,9 @@ void Error_Handler(void);
 #define LED14_GPIO_Port GPIOF
 #define LED15_Pin GPIO_PIN_15
 #define LED15_GPIO_Port GPIOF
+#define INFRARED_Pin GPIO_PIN_0
+#define INFRARED_GPIO_Port GPIOG
+#define INFRARED_EXTI_IRQn EXTI0_IRQn
 #define KEY0_Pin GPIO_PIN_1
 #define KEY0_GPIO_Port GPIOG
 #define KEY1_Pin GPIO_PIN_7
@@ -159,6 +167,8 @@ void Error_Handler(void);
 #define TLC5615_CS_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define UART_TX_MAX_LEN 64
+
 extern volatile uint16_t
   adc_value[2]; // 存放 ADC 值，adc_value[0] 存放光敏电阻的采样值，adc_value[1] 存放热敏电阻的采样值
 
