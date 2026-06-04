@@ -75,11 +75,12 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, RELAY0_Pin|RELAY1_Pin|TLC5615_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, WE_G_Pin|WE_Y_Pin|WE_R_Pin|NS_G_Pin
-                          |NS_Y_Pin|NS_R_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, CH451_LOAD_Pin|CH451_DIN_Pin|CH451_DCLK_Pin|STEPPER_A_Pin
+                          |STEPPER_B_Pin|STEPPER_C_Pin|STEPPER_D_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, STEPPER_A_Pin|STEPPER_B_Pin|STEPPER_C_Pin|STEPPER_D_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, WE_G_Pin|WE_Y_Pin|WE_R_Pin|NS_G_Pin
+                          |NS_Y_Pin|NS_R_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : LED0_Pin */
   GPIO_InitStruct.Pin = LED0_Pin;
@@ -134,11 +135,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(INFRARED_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : KEY0_Pin */
-  GPIO_InitStruct.Pin = KEY0_Pin;
+  /*Configure GPIO pins : KEY0_Pin CH451_DOUT_Pin */
+  GPIO_InitStruct.Pin = KEY0_Pin|CH451_DOUT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(KEY0_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /*Configure GPIO pins : KEY1_Pin KEY2_Pin KEY3_Pin DIP0_Pin
                            DIP1_Pin DIP2_Pin DIP3_Pin DIP4_Pin
@@ -155,6 +156,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : CH451_LOAD_Pin CH451_DIN_Pin CH451_DCLK_Pin */
+  GPIO_InitStruct.Pin = CH451_LOAD_Pin|CH451_DIN_Pin|CH451_DCLK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /*Configure GPIO pins : WE_G_Pin WE_Y_Pin WE_R_Pin NS_G_Pin
                            NS_Y_Pin NS_R_Pin */

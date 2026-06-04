@@ -23,11 +23,13 @@
 #include "main.h"
 #include "task.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KeyScan.h"
 #include "LCD12864.h"
 #include "btn.h"
+#include "ch451.h"
 #include "dc_motor.h"
 #include "dht11.h"
 #include "ds18b20.h"
@@ -131,6 +133,13 @@ const osThreadAttr_t DACTask_attributes = {
     .stack_size = 128 * 4,
     .priority = (osPriority_t)osPriorityBelowNormal,
 };
+/* Definitions for CH451Task */
+osThreadId_t CH451TaskHandle;
+const osThreadAttr_t CH451Task_attributes = {
+    .name = "CH451Task",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
 /* Definitions for DIP2LCDQueue */
 osMessageQueueId_t DIP2LCDQueueHandle;
 const osMessageQueueAttr_t DIP2LCDQueue_attributes = { .name = "DIP2LCDQueue" };
@@ -153,6 +162,7 @@ void StartSensorTask(void *argument);
 void StartMotorTask(void *argument);
 void StartInfraredTask(void *argument);
 void StartDACTask(void *argument);
+void StartCH451Task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -221,6 +231,9 @@ MX_FREERTOS_Init(void)
 
     /* creation of DACTask */
     DACTaskHandle = osThreadNew(StartDACTask, NULL, &DACTask_attributes);
+
+    /* creation of CH451Task */
+    CH451TaskHandle = osThreadNew(StartCH451Task, NULL, &CH451Task_attributes);
 
     /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
@@ -644,9 +657,6 @@ StartSensorTask(void *argument)
     /* Infinite loop */
     for(;;)
     {
-        // 关闭 TIM5 中断，保证测量原子性
-        HAL_TIM_Base_Stop_IT(&htim5);
-
         // 读取 DHT11 和 DS18B20 传感器数据，并通过 UART 发送队列发送到上位机
         DHT11_Data dht11_data;
         if(DHT11_Read(&dht11_data) == 0)
@@ -698,10 +708,7 @@ StartSensorTask(void *argument)
             }
         }
 
-        // 开启 TIM5 中断
-        HAL_TIM_Base_Start_IT(&htim5);
-
-        osDelay(2000); // 每 2 秒读取一次传感器数据
+        osDelay(4000); // 每 4 秒读取一次传感器数据
     }
     /* USER CODE END StartSensorTask */
 }
@@ -975,6 +982,36 @@ StartDACTask(void *argument)
         osDelay(100);
     }
     /* USER CODE END StartDACTask */
+}
+
+/* USER CODE BEGIN Header_StartCH451Task */
+/**
+ * @brief Function implementing the CH451Task thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_StartCH451Task */
+void
+StartCH451Task(void *argument)
+{
+    /* USER CODE BEGIN StartCH451Task */
+    CH451_Init();
+    CH451_ClearDisplay();
+
+    /* Infinite loop */
+    for(;;)
+    {
+        if(CH451_KeyPressed())
+        {
+            uint8_t keycode = CH451_ReadKeyCode();
+            uint8_t row = CH451_GetKeyRow(keycode);
+            uint8_t col = CH451_GetKeyCol(keycode);
+            uint8_t pressed = CH451_IsKeyPress(keycode);
+            CH451_DisplayKeyMatrix(row, col, pressed);
+        }
+        osDelay(20);
+    }
+    /* USER CODE END StartCH451Task */
 }
 
 /* Private application code --------------------------------------------------*/

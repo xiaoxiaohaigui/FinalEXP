@@ -133,8 +133,12 @@ DS18B20_Read(DS18B20_Data *out)
         return -3;
     }
 
+    /* 关闭全局中断，保护单总线操作时序不被 ISR 打断 */
+    __disable_irq();
+
     if(!DS18B20_Reset())
     {
+        __enable_irq();
         return -1;
     }
 
@@ -146,16 +150,24 @@ DS18B20_Read(DS18B20_Data *out)
 
     if(!DS18B20_Reset())
     {
+        __enable_irq();
         return -1;
     }
 
     DS18B20_WriteByte(DS18B20_CMD_SKIP_ROM);
     DS18B20_WriteByte(DS18B20_CMD_CONVERT);
 
+    __enable_irq();
+    /* 转换期间允许中断响应 */
+
     osDelay(DS18B20_CONV_TIME_MS);
+
+    /* 再次关闭中断，保护读暂存器时序 */
+    __disable_irq();
 
     if(!DS18B20_Reset())
     {
+        __enable_irq();
         return -1;
     }
 
@@ -164,6 +176,8 @@ DS18B20_Read(DS18B20_Data *out)
 
     lsb = DS18B20_ReadByte();
     msb = DS18B20_ReadByte();
+
+    __enable_irq();
 
     raw = (int16_t)((msb << 8) | lsb);
     temp_x10 = (int32_t)raw * 10 / 16;

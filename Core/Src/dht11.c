@@ -142,9 +142,19 @@ DHT11_Read(DHT11_Data *out)
         return -3;
     }
 
-    DHT11_Start_Signal();
+    /* 起始信号: 18ms 低电平 (仅需满足最小时长，允许中断) */
+    HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_RESET);
+    Delay_us(18000);
+
+    /* 关闭全局中断，保护后续时序关键的应答与数据读取 */
+    __disable_irq();
+
+    HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_SET);
+    Delay_us(30);
+
     if(!DHT11_Check_Response())
     {
+        __enable_irq();
         return -1;
     }
 
@@ -152,9 +162,12 @@ DHT11_Read(DHT11_Data *out)
     {
         if(!DHT11_Read_Byte(&buf[i]))
         {
+            __enable_irq();
             return -1;
         }
     }
+
+    __enable_irq();
 
     if((uint8_t)(buf[0] + buf[1] + buf[2] + buf[3]) != buf[4])
     {

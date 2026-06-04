@@ -55,6 +55,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/stepper_motor.c
     Core/Src/dc_motor.c
     Core/Src/ir_receiver.c
+    Core/Src/ch451.c
     # Add user sources here
 )
 

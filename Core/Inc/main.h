@@ -143,6 +143,14 @@ void Error_Handler(void);
 #define DIP6_GPIO_Port GPIOB
 #define DIP7_Pin GPIO_PIN_11
 #define DIP7_GPIO_Port GPIOB
+#define CH451_DOUT_Pin GPIO_PIN_2
+#define CH451_DOUT_GPIO_Port GPIOG
+#define CH451_LOAD_Pin GPIO_PIN_3
+#define CH451_LOAD_GPIO_Port GPIOG
+#define CH451_DIN_Pin GPIO_PIN_4
+#define CH451_DIN_GPIO_Port GPIOG
+#define CH451_DCLK_Pin GPIO_PIN_5
+#define CH451_DCLK_GPIO_Port GPIOG
 #define WE_G_Pin GPIO_PIN_0
 #define WE_G_GPIO_Port GPIOD
 #define WE_Y_Pin GPIO_PIN_1
