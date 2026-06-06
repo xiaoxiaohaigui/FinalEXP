@@ -151,6 +151,8 @@ void Error_Handler(void);
 #define CH451_DIN_GPIO_Port GPIOG
 #define CH451_DCLK_Pin GPIO_PIN_5
 #define CH451_DCLK_GPIO_Port GPIOG
+#define BUZZER_Pin GPIO_PIN_8
+#define BUZZER_GPIO_Port GPIOC
 #define WE_G_Pin GPIO_PIN_0
 #define WE_G_GPIO_Port GPIOD
 #define WE_Y_Pin GPIO_PIN_1

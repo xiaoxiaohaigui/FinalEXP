@@ -855,6 +855,11 @@ StartInfraredTask(void *argument)
                 uint8_t cmd = IR_Get_Command();
                 const char *irKey = IR_Get_Key();
 
+                // 每次接收到按键命令时，蜂鸣器响 100 ms
+                HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
+                osDelay(100);
+                HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
+
                 // ── 红外遥控控制逻辑 ──────────────────────────────
                 if(cmd == 0x40) // NEXT: 向后切换设备控制模式
                 {

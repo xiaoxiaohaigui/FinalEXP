@@ -26,6 +26,7 @@
 #include "tim.h"
 #include "usart.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "DelayUs.h"
@@ -110,20 +111,22 @@ main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_DMA_Init();
-    MX_TIM3_Init();
     MX_ADC1_Init();
     MX_USART1_UART_Init();
     MX_TIM5_Init();
     MX_SPI3_Init();
     MX_TIM8_Init();
     MX_TIM4_Init();
+    MX_TIM7_Init();
+    MX_TIM3_Init();
     /* USER CODE BEGIN 2 */
     // 初始化按键
     Btn_Init();
     KeyScan_Init();
 
-    // 初始化 LCD12864
     Delay_Init();
+
+    // 初始化 LCD12864
     LCD_Init();
     LCD_Clear();
     IR_Receiver_Init(); // 初始化红外接收器

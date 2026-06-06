@@ -47,14 +47,15 @@ DHT11_WaitLevelEnd(GPIO_PinState state, uint16_t timeout_us)
 }
 
 /* 发送起始信号 */
-static void
-DHT11_Start_Signal(void)
-{
-    HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_RESET);
-    Delay_us(18000);
-    HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_SET);
-    Delay_us(30);
-}
+// 该函数已内联到 DHT11_Read 中，且起始信号的时序要求较宽松，允许中断，因此不再单独实现一个函数
+// static void
+// DHT11_Start_Signal(void)
+// {
+//     HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_RESET);
+//     Delay_us(18000);
+//     HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_SET);
+//     Delay_us(30);
+// }
 
 /* 检查从机响应 */
 static int
