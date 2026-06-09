@@ -23,7 +23,6 @@
 #include "main.h"
 #include "task.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "KeyScan.h"
@@ -329,7 +328,6 @@ StartSwitchTask(void *argument)
         dipState |= (HAL_GPIO_ReadPin(DIP6_GPIO_Port, DIP6_Pin) == GPIO_PIN_RESET) ? 0x40 : 0x00;
         dipState |= (HAL_GPIO_ReadPin(DIP7_GPIO_Port, DIP7_Pin) == GPIO_PIN_RESET) ? 0x80 : 0x00;
         osMessageQueuePut(DIP2LCDQueueHandle, &dipState, 0, 0);
-        osDelay(200);
 
         // 独立按键 KEY3 控制设备控制模式的切换
         if(keyEvent[3] == KEY_EVENT_CLICK)

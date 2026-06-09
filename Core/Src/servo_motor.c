@@ -5,9 +5,9 @@
 void
 ServoMotor_Init(void)
 {
-    // TIM8 CH4 配置为 PWM 输出，频率 50Hz，初始占空比 0%（对应 1ms 脉宽）
+    // TIM8 CH4 配置为 PWM 输出，频率 50Hz，占空比初始值为 2.5%（对应舵机的 0 度位置）
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
-    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, 0);
+    __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_4, 50);
 }
 
 // 舵机归零

@@ -1,4 +1,7 @@
 {
+    "markdown-pdf.styles": [
+        "pdf-style.css"
+    ],
     "cmake.cmakePath": "cube-cmake",
     "cmake.configureArgs": [
         "-DCMAKE_COMMAND=cube-cmake"
