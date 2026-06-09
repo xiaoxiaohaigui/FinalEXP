@@ -627,8 +627,11 @@ StartDisplayTask(void *argument)
             HAL_GPIO_TogglePin(LED14_GPIO_Port, LED14_Pin);
         }
 
-        // 第四行内容待改
-        snprintf(row4Text, sizeof(row4Text), "%s", "Enter text");
+        // 第四行：显示当前直流电机占空比
+        {
+            uint8_t duty = DCMotor_GetDuty();
+            snprintf(row4Text, sizeof(row4Text), "DC Duty: %3u %%", (unsigned int)duty);
+        }
         memset(row4, ' ', 16);
         memcpy(row4, row4Text, strlen(row4Text) > 16 ? 16 : strlen(row4Text));
         row4[16] = '\0';
@@ -780,14 +783,15 @@ StartMotorTask(void *argument)
             case DC_MOTOR_CONTROL:
                 if(motorStartStopState == MOTOR_ON)
                 {
+                    uint8_t duty = DCMotor_GetDuty();
                     switch(motorMode)
                     {
                         case MOTOR_MODE1:
-                            DCMotor_Forward(DCMOTOR_DEFAULT_DUTY_PERCENT);
+                            DCMotor_Forward(duty);
                             break;
 
                         case MOTOR_MODE2:
-                            DCMotor_Reverse(DCMOTOR_DEFAULT_DUTY_PERCENT);
+                            DCMotor_Reverse(duty);
                             break;
                     }
                 }
@@ -931,6 +935,20 @@ StartInfraredTask(void *argument)
                     {
                         motorStartStopState =
                           (motorStartStopState == MOTOR_OFF) ? MOTOR_ON : MOTOR_OFF;
+                    }
+                }
+                else if(cmd == 0x07) // VOL-: 直流电机模式下减少占空比
+                {
+                    if(deviceControlMode == DC_MOTOR_CONTROL)
+                    {
+                        DCMotor_AdjustDuty(-10);
+                    }
+                }
+                else if(cmd == 0x15) // VOL+: 直流电机模式下增加占空比
+                {
+                    if(deviceControlMode == DC_MOTOR_CONTROL)
+                    {
+                        DCMotor_AdjustDuty(+10);
                     }
                 }
 
