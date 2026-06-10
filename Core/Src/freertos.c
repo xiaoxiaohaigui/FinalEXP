@@ -618,12 +618,6 @@ StartDisplayTask(void *argument)
         row3[16] = '\0';
         LCD_DispString(ROW3, COL1, row3);
 
-        // 按键 2 暂时无用，先用于控制 LED 14 亮灭
-        if(keyEvent[2] == KEY_EVENT_CLICK)
-        {
-            keyEvent[2] = KEY_EVENT_NONE; // 清除事件
-            HAL_GPIO_TogglePin(LED14_GPIO_Port, LED14_Pin);
-        }
 
         // 第四行：显示当前直流电机占空比
         {
@@ -747,6 +741,15 @@ StartMotorTask(void *argument)
                 keyEvent[1] = KEY_EVENT_NONE; // 清除事件
                 motorMode =
                   (motorMode == MOTOR_MODE1) ? MOTOR_MODE2 : MOTOR_MODE1; // 切换电机预设模式
+            }
+            // KEY2: 直流电机模式下增加占空比
+            if(keyEvent[2] == KEY_EVENT_CLICK)
+            {
+                keyEvent[2] = KEY_EVENT_NONE; // 清除事件
+                if(deviceControlMode == DC_MOTOR_CONTROL)
+                {
+                    DCMotor_AdjustDuty(+10);
+                }
             }
         }
 
